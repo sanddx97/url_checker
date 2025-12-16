@@ -126,37 +126,73 @@ Containers are the boxes that hold your content.
 ### Usage
 Every sheet needs one root **GROUP** container. Inside, you place other containers using **Coordinates** (R1, C1, R2, C2).
 
-#### Relative Positioning
-Instead of hard-coding numbers (`r1="5"`), use formulas relative to other boxes.
-*   `target.R2`: The bottom row of the target box.
-*   `target.C2`: The right column of the target box.
+## 5.1 Deep Dive: Relative Positioning
 
-### Example
+Relative positioning allows you to place a box based on the position of another box. This is crucial for dynamic reports where the size of a table or text might change.
+
+### The Concept: Anchor + Offset
+Think of it like giving directions: "Go to the **Bottom** of the Logo, then go **Down 1 Step**."
+
+*   **Anchor**: The reference point (e.g., `logo.R2`).
+*   **Offset**: The adjustment (e.g., `1`).
+
+### The Syntax
+We use a nested `<item>` structure to perform the math: `Anchor + Offset`.
+
 ```xml
-<!-- 1. The Header Group -->
-<container type="GROUP" id="header_section">
-    <position r1="0" c1="0"/> <!-- Starts at top-left -->
-    <containers>
-        
-        <!-- Logo (Leaf) -->
-        <container type="LEAF" id="logo_box">
-            <position r1="0" c1="0" r2="2" c2="2"/> <!-- 3x3 box -->
-            <component type="IMAGE" source="logo.png"/>
-        </container>
+<r1Expression>
+    <item>
+        <item>
+            <item>TARGET_ID.COORDINATE</item> <!-- The Anchor -->
+            <item>OFFSET_NUMBER</item>      <!-- The Offset -->
+        </item>
+    </item>
+</r1Expression>
+```
 
-        <!-- Title (Leaf) - Positioned to the RIGHT of Logo -->
-        <container type="LEAF" id="title_box">
-            <relativePosition>
-                <!-- Start Column = Logo's End Column + 1 -->
-                <c1Expression><item><item><item>logo_box.C2</item><item>1</item></item></item></c1Expression>
-                <!-- Start Row = Logo's Start Row -->
-                <r1Expression><item><item><item>logo_box.R1</item></item></item></r1Expression>
-            </relativePosition>
-            <component type="TEXT" content="Sales Report"/>
-        </container>
+### Available Coordinates
+*   `TARGET.R1`: Top Row of the target.
+*   `TARGET.R2`: Bottom Row of the target.
+*   `TARGET.C1`: Left Column of the target.
+*   `TARGET.C2`: Right Column of the target.
 
-    </containers>
-</container>
+### Layout Cookbook (Common Patterns)
+
+#### Pattern A: Place BELOW (The most common)
+"Start my top row (R1) one row after the target's bottom row (R2)."
+```xml
+<r1Expression>
+    <item><item><item>header.R2</item><item>1</item></item></item>
+</r1Expression>
+```
+
+#### Pattern B: Place to the RIGHT
+"Start my left column (C1) one column after the target's right column (C2)."
+```xml
+<c1Expression>
+    <item><item><item>sidebar.C2</item><item>1</item></item></item>
+</c1Expression>
+```
+
+#### Pattern C: Align TOPS
+"Start my top row (R1) at the same row as the target's top row (R1)."
+```xml
+<r1Expression>
+    <item><item><item>sidebar.R1</item></item></item> <!-- No offset needed -->
+</r1Expression>
+```
+
+#### Pattern D: Full Width BELOW
+"Start below the header, start at column 0, and end at column 10."
+```xml
+<relativePosition>
+    <!-- Row: Below Header -->
+    <r1Expression><item><item><item>header.R2</item><item>1</item></item></item></r1Expression>
+    
+    <!-- Columns: Hardcoded 0 to 10 -->
+    <!-- Note: You can mix relative rows with absolute columns! -->
+</relativePosition>
+<position c1="0" c2="10"/> <!-- Define columns here -->
 ```
 
 ---
