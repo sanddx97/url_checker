@@ -1,282 +1,408 @@
-# KRAG Template Design User Guide
-## A Beginner's Guide to Creating Beautiful Reports
+# KRAG Template Master Reference Guide
+## The Complete Manual for Report Design
 
-> [!TIP]
-> **Who is this guide for?**
-> This guide is for anyone who wants to design reports using the KRAG system. **No programming knowledge is required.** If you can sketch a layout on a piece of paper, you can create a KRAG template!
-
----
-
-## 1. Introduction: The "Binder" Analogy
-
-Before we look at any code, let's visualize how a KRAG report is built. Think of your report like a physical **Ring Binder**.
-
-1.  **The Workbook (The Binder)**: This is the file itself (e.g., `Sales_Report.xlsx`). It holds everything together.
-2.  **Sheets (The Pages)**: Inside the binder, you have pages (tabs in Excel). You can have one page or many.
-3.  **Containers (The Boxes)**: On each page, you draw rectangular **boxes** to organize your content.
-    *   Some boxes are just for grouping things together (like a "Header" section).
-    *   Some boxes hold the actual content.
-4.  **Components (The Content)**: Inside the boxes, you put your actual content:
-    *   **Text**: Titles, paragraphs, labels.
-    *   **Images**: Logos, diagrams.
-    *   **Tables**: The actual data grids.
-
-**The Golden Rule:** Every piece of content MUST live inside a Container (Box). You cannot just float text on a page; it needs a box!
+> [!NOTE]
+> **How to Use This Guide**
+> This guide is structured to help you understand and use every feature of the KRAG system.
+> For each feature, we follow this pattern:
+> 1.  **Functionality**: What is it?
+> 2.  **Usage**: How do I write the code?
+> 3.  **Example**: Show me a snippet.
+>
+> **At the end of this document, you will find a complete, copy-pasteable End-to-End Template.**
 
 ---
 
-## 2. Getting Started: Your First "Hello World"
+# 1. Introduction: The "Binder" Concept
 
-Let's look at the simplest possible template. This creates an Excel file with one sheet and one title.
+### Functionality
+Before writing code, visualize your report as a physical **Ring Binder**.
+*   **Workbook**: The binder itself.
+*   **Sheets**: The pages inside.
+*   **Containers**: The boxes you draw on a page.
+*   **Components**: The content (Text, Images, Tables) inside the boxes.
 
+### Usage
+You build a template by nesting these elements in XML:
+`Workbook -> Sheet -> Container -> Component`
+
+---
+
+# 2. The Workbook (Root)
+
+### Functionality
+The Workbook is the root of your template. It defines the output file name, format, and data source.
+
+### Usage
+The `<Template>` tag must be the first line of your file.
+
+| Attribute | Required | Description | Allowed Values |
+| :--- | :--- | :--- | :--- |
+| `type` | **Yes** | Defines this as a workbook. | `WORKBOOK` |
+| `fileName` | **Yes** | Name of the output file. | Any text (no extension) |
+| `fileFormat` | **Yes** | The output format. | `XLSX`, `PDF`, `CSV`, `ZIP` |
+| `dataSource` | **Yes** | Where data comes from. | `TABLEAU`, `MANUAL`, `API` |
+
+### Example
 ```xml
-<Template type="WORKBOOK" fileName="my_first_report" fileFormat="XLSX">
-    
-    <!-- The Pages -->
-    <sheets>
-        <sheet name="Summary">
-            
-            <!-- The Root Box (Holds everything on the page) -->
-            <container type="GROUP" id="root">
-                <position r1="0" c1="0"/> <!-- Starts at top-left -->
-                
-                <containers>
-                    <!-- A Box for our Title -->
-                    <container type="LEAF" id="title_box">
-                        <!-- Position: Row 0, Col 0 to Row 1, Col 5 -->
-                        <position r1="0" c1="0" r2="1" c2="5"/>
-                        
-                        <!-- The Content -->
-                        <component type="TEXT" content="Hello World!"/>
-                    </container>
-                </containers>
-                
-            </container>
-        </sheet>
-    </sheets>
-    
+<Template type="WORKBOOK" fileName="Q4_Sales_Report" fileFormat="XLSX" dataSource="TABLEAU">
+    <!-- Content goes here -->
 </Template>
 ```
 
-**What just happened?**
-1.  We created a **Workbook** named `my_first_report`.
-2.  We added a **Sheet** named "Summary".
-3.  We added a **Root Container** (the main layout area).
-4.  Inside that, we put a **Leaf Container** (a content box) at the top-left.
-5.  Inside the box, we put a **Text Component** saying "Hello World!".
-
 ---
 
-## 3. The Building Blocks
+# 3. Global Styles
 
-### 3.1 Containers: The Boxes
-There are only two types of boxes you need to know:
+### Functionality
+Styles define how your content looks (Fonts, Colors, Borders). Defining them globally lets you reuse them, keeping your code clean.
 
-| Type | Name | Purpose | Analogy |
-| :--- | :--- | :--- | :--- |
-| **GROUP** | Group Container | Holds *other containers*. Used for layout and organization. | A drawer divider. It doesn't hold socks directly; it holds smaller boxes for socks. |
-| **LEAF** | Leaf Container | Holds *one component*. Used for actual content. | The sock box. You put the actual socks (content) inside it. |
+### Usage
+Define `<style>` blocks inside `<globalStyles>`. Give each style a unique `id`.
 
-### 3.2 Components: The Content
-There are three main types of content you can put in a Leaf Container:
+| Tag | Attributes | Description |
+| :--- | :--- | :--- |
+| `<font>` | `fontName`, `size`, `bold`, `color` | Text appearance. |
+| `<border>` | `style`, `color`, `top`, `bottom`... | Box borders. |
+| `<fill>` | `foregroundColor` | Background color. |
+| `<alignment>` | `horizontal`, `vertical` | Text positioning. |
+| `<format>` | (Value) | Excel format string (e.g., `#,##0.00`). |
 
-#### A. Text
-Simple text for titles, descriptions, or notes.
-```xml
-<component type="TEXT" content="Monthly Sales Report"/>
-```
-
-#### B. Image
-Pictures, logos, or icons. You can load them from a website (URL) or a file.
-```xml
-<component type="IMAGE" source="https://example.com/logo.png" scale="0.5"/>
-```
-*   `scale="0.5"` means "50% of original size".
-
-#### C. Table
-The powerhouse! Displays data in rows and columns. (We will cover this in detail in Section 6).
-
----
-
-## 4. Styling Your Report: Make it Pretty
-
-Nobody likes boring reports. You can define **Global Styles** at the top of your template and use them anywhere. It's like creating a "Theme".
-
-### Step 1: Define the Style
+### Example
 ```xml
 <globalStyles>
     <style>
-        <id>my_fancy_title</id> <!-- Give it a unique name -->
-        
-        <!-- Font Settings -->
-        <font fontName="Arial" size="24" bold="true" color="#FF0000"/>
-        
-        <!-- Alignment -->
+        <id>header_style</id>
+        <font fontName="Arial" size="12" bold="true" color="#FFFFFF"/>
+        <fill foregroundColor="#0000FF"/>
         <alignment horizontal="CENTER" vertical="CENTER"/>
-        
-        <!-- Background Color -->
-        <fill foregroundColor="#FFFF00"/> <!-- Yellow background -->
-        
-        <!-- Borders -->
         <border style="THIN" color="#000000" bottom="true"/>
     </style>
 </globalStyles>
 ```
 
-### Step 2: Use the Style
-Add `styleId="my_fancy_title"` to any component.
-```xml
-<component type="TEXT" content="WARNING" styleId="my_fancy_title"/>
-```
-
-### Style Cheat Sheet
-*   **Colors**: Use Hex codes (e.g., `#FFFFFF` for white, `#000000` for black, `#FF0000` for red).
-*   **Alignments**: `LEFT`, `CENTER`, `RIGHT`, `TOP`, `BOTTOM`.
-*   **Borders**: `THIN`, `THICK`, `DOTTED`, `DASHED`.
-
 ---
 
-## 5. Layout: Where Does it Go?
+# 4. Sheets & Configuration
 
-Placing boxes on the page is done using **Coordinates**.
-*   **R1**: Start Row (0 is the top)
-*   **C1**: Start Column (0 is the left, i.e., Column A)
-*   **R2**: End Row
-*   **C2**: End Column
+### Functionality
+A Sheet represents a single tab in an Excel workbook or a page in a PDF. You can configure page settings like gridlines and print layout.
 
-### 5.1 Absolute Positioning (Hard Coded)
-"Put this box exactly at Row 5, Column 2."
-```xml
-<position r1="5" c1="2" r2="6" c2="4"/>
-```
-*   **Pros**: Easy to understand.
-*   **Cons**: If you move the box above it, this one stays put and might overlap.
+### Usage
+Use `<sheet>` to create a page and `<sheetConfig>` for settings.
 
-### 5.2 Relative Positioning (Smart Layout)
-"Put this box 1 row below the `title_box`."
-This is **highly recommended**. It makes your layout flexible.
-
-```xml
-<relativePosition>
-    <!-- Start Row: Take title_box's bottom row (R2) and add 1 -->
-    <r1Expression>
-        <item><item><item>title_box.R2</item><item>1</item></item></item>
-    </r1Expression>
-    
-    <!-- Start Column: Same as title_box's start column (C1) -->
-    <c1Expression>
-        <item><item><item>title_box.C1</item></item></item>
-    </c1Expression>
-</relativePosition>
-```
-*   **Pros**: If `title_box` gets bigger, this box moves down automatically!
-
----
-
-## 6. Mastering Tables: The Data Grid
-
-Tables are the most important part of a report. They connect to your data (like Tableau) and show it.
-
-### The Anatomy of a Table
-A table is split into two groups:
-1.  **Column Groups**: What goes across the top? (e.g., Years, Months, Metrics)
-2.  **Row Groups**: What goes down the side? (e.g., Product Categories, Regions)
-
-### Example: Sales by Year and Category
-
-**Goal**:
-| | 2023 | 2024 |
+| Tag | Description | Default |
 | :--- | :--- | :--- |
-| **Electronics** | $500 | $600 |
-| **Furniture** | $200 | $300 |
+| `<showGridLines>` | Show Excel gridlines. | `true` |
+| `<zoomScale>` | Zoom percentage. | `100` |
+| `<printSetup>` | Orientation and paper size. | `PORTRAIT`, `A4` |
 
-### The Code
+### Example
+```xml
+<sheets>
+    <sheet name="Summary Dashboard">
+        <sheetConfig>
+            <showGridLines>false</showGridLines>
+            <zoomScale>85</zoomScale>
+            <printSetup>
+                <orientation>LANDSCAPE</orientation>
+                <paperSize>A4</paperSize>
+            </printSetup>
+        </sheetConfig>
+        <!-- Containers go here -->
+    </sheet>
+</sheets>
+```
+
+---
+
+# 5. Layout & Containers
+
+### Functionality
+Containers are the boxes that hold your content.
+*   **GROUP**: A structural box that holds *other containers*. Used for organizing sections (e.g., "Header Section").
+*   **LEAF**: A content box that holds *one component*. Used for actual items (Text, Image, Table).
+
+### Usage
+Every sheet needs one root **GROUP** container. Inside, you place other containers using **Coordinates** (R1, C1, R2, C2).
+
+#### Relative Positioning
+Instead of hard-coding numbers (`r1="5"`), use formulas relative to other boxes.
+*   `target.R2`: The bottom row of the target box.
+*   `target.C2`: The right column of the target box.
+
+### Example
+```xml
+<!-- 1. The Header Group -->
+<container type="GROUP" id="header_section">
+    <position r1="0" c1="0"/> <!-- Starts at top-left -->
+    <containers>
+        
+        <!-- Logo (Leaf) -->
+        <container type="LEAF" id="logo_box">
+            <position r1="0" c1="0" r2="2" c2="2"/> <!-- 3x3 box -->
+            <component type="IMAGE" source="logo.png"/>
+        </container>
+
+        <!-- Title (Leaf) - Positioned to the RIGHT of Logo -->
+        <container type="LEAF" id="title_box">
+            <relativePosition>
+                <!-- Start Column = Logo's End Column + 1 -->
+                <c1Expression><item><item><item>logo_box.C2</item><item>1</item></item></item></c1Expression>
+                <!-- Start Row = Logo's Start Row -->
+                <r1Expression><item><item><item>logo_box.R1</item></item></item></r1Expression>
+            </relativePosition>
+            <component type="TEXT" content="Sales Report"/>
+        </container>
+
+    </containers>
+</container>
+```
+
+---
+
+# 6. Components
+
+## 6.1 Text Component
+
+### Functionality
+Displays static text.
+
+### Usage
+Use `type="TEXT"`.
+
+### Example
+```xml
+<component type="TEXT" content="Confidential Report" styleId="header_style"/>
+```
+
+## 6.2 Image Component
+
+### Functionality
+Displays an image from a URL or file path.
+
+### Usage
+Use `type="IMAGE"`.
+
+| Attribute | Description |
+| :--- | :--- |
+| `source` | URL or File Path. |
+| `scale` | Resize factor (e.g., `0.5` for 50%). |
+
+### Example
+```xml
+<component type="IMAGE" source="https://example.com/logo.png" scale="0.8"/>
+```
+
+## 6.3 Table Component (The Powerhouse)
+
+### Functionality
+Displays data in a grid. It connects to your data source (e.g., Tableau) and maps fields to rows and columns.
+
+### Usage
+A table consists of:
+1.  **Column Groups**: Horizontal headers (e.g., Years).
+2.  **Row Groups**: Vertical headers (e.g., Categories).
+3.  **Data Fields**: The numbers in the middle.
+
+### Example
 ```xml
 <component type="TABLE" id="sales_table">
     
-    <!-- 1. Define Columns (The Years) -->
+    <!-- Columns: Years -->
     <columnGroups>
         <columnGroup id="years">
             <headerFields>
                 <headerField id="year_header">
-                    <labelConfig headerLabel="Year"/> <!-- The word "Year" -->
+                    <labelConfig headerLabel="Year"/>
                     <valueConfig dataType="TEXT">
-                        <!-- Get "Year" field from Tableau -->
                         <valueSource><sourceInfos><sourceInfo field="Year" sourceId="TableauSheet"/></sourceInfos></valueSource>
                     </valueConfig>
                 </headerField>
             </headerFields>
             
-            <!-- The Data Inside the Columns (Sales Numbers) -->
+            <!-- Data: Sales Numbers -->
             <dataFields>
                 <dataField id="sales_data">
-                    <labelConfig headerLabel="Sales"/>
-                    <valueConfig dataType="FLOAT" operation="SUM"> <!-- Sum up the numbers -->
+                    <labelConfig headerLabel="Revenue"/>
+                    <valueConfig dataType="FLOAT" operation="SUM">
                         <valueSource><sourceInfos><sourceInfo field="Sales" sourceId="TableauSheet"/></sourceInfos></valueSource>
                     </valueConfig>
                 </dataField>
             </dataFields>
         </columnGroup>
     </columnGroups>
-    
-    <!-- 2. Define Rows (The Categories) -->
+
+    <!-- Rows: Categories -->
     <rowGroups>
         <rowGroup id="categories">
             <headerFields>
                 <headerField id="cat_header">
                     <labelConfig headerLabel="Category"/>
                     <valueConfig dataType="TEXT">
-                        <!-- Get "Category" field from Tableau -->
                         <valueSource><sourceInfos><sourceInfo field="Category" sourceId="TableauSheet"/></sourceInfos></valueSource>
                     </valueConfig>
                 </headerField>
             </headerFields>
         </rowGroup>
     </rowGroups>
-    
+
 </component>
 ```
 
-### Key Table Settings
-You can control how the table behaves using `<tableConfig>`:
-*   `mergeDuplicateRows="true"`: If "Electronics" appears twice, merge them into one big cell.
-*   `showColumnHeader="true"`: Show the gray header row at the top.
-*   `showRowHeader="true"`: Show the gray header column on the left.
+---
+
+# 7. Appendix: Reference Values
+
+### Data Types (`dataType`)
+*   `TEXT`: Strings.
+*   `INT`: Whole numbers.
+*   `FLOAT`: Decimals.
+*   `DATE`: Dates.
+*   `PERCENTAGE`: Percent values (0.1 = 10%).
+
+### Operations (`operation`)
+*   `SUM`: Total.
+*   `AVG`: Average.
+*   `COUNT`: Count items.
+*   `MIN` / `MAX`: Extremes.
+*   `NONE`: Raw data.
 
 ---
 
-## 7. Reference Guide
+# 8. Full End-to-End Template
 
-### 7.1 Supported Data Types
-When mapping data, tell the system what kind of data it is:
-*   `TEXT`: Names, IDs, descriptions.
-*   `INT`: Whole numbers (1, 50, 100).
-*   `FLOAT`: Decimals (10.50, 99.99).
-*   `DATE`: Dates (2023-12-25).
-*   `PERCENTAGE`: Percent values (0.5 for 50%).
+Here is a complete, working template that combines everything. You can copy this file and use it as a starter.
 
-### 7.2 Operations (Math)
-What should we do with the numbers?
-*   `SUM`: Add them up (Total Sales).
-*   `AVG`: Calculate average (Average Price).
-*   `COUNT`: Count how many items.
-*   `MIN` / `MAX`: Find the smallest or largest number.
-*   `NONE`: Just show the raw data.
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Template type="WORKBOOK" fileName="Executive_Summary" fileFormat="XLSX" dataSource="TABLEAU">
 
-### 7.3 Formatting Codes
-Use these in `<style><format>...</format></style>`:
-*   `#,##0.00` -> 1,234.56 (Standard Currency)
-*   `0%` -> 50% (Percentage)
-*   `yyyy-mm-dd` -> 2023-12-31 (Date)
-*   `dd/mm/yyyy` -> 31/12/2023 (UK Date)
+    <!-- 1. GLOBAL STYLES -->
+    <globalStyles>
+        <!-- Title Style: Big, Blue, Bold -->
+        <style>
+            <id>title_style</id>
+            <font fontName="Calibri" size="24" bold="true" color="#1F4E78"/>
+            <alignment horizontal="CENTER" vertical="CENTER"/>
+        </style>
+        
+        <!-- Header Style: Blue Background, White Text -->
+        <style>
+            <id>header_style</id>
+            <font fontName="Calibri" size="11" bold="true" color="#FFFFFF"/>
+            <fill foregroundColor="#4472C4"/>
+            <border style="THIN" color="#000000" top="true" bottom="true" left="true" right="true"/>
+            <alignment horizontal="CENTER" vertical="CENTER"/>
+        </style>
 
----
+        <!-- Data Style: Currency Format -->
+        <style>
+            <id>currency_style</id>
+            <font fontName="Calibri" size="11" color="#000000"/>
+            <alignment horizontal="RIGHT" vertical="CENTER"/>
+            <format>#,##0.00</format> <!-- $1,234.56 -->
+            <border style="THIN" color="#D9D9D9" top="true" bottom="true" left="true" right="true"/>
+        </style>
+    </globalStyles>
 
-> [!NOTE]
-> **Need Help?**
-> If your template isn't working, check:
-> 1.  Did you close all your tags? (e.g., `<container>...</container>`)
-> 2.  Are your IDs unique? (You can't have two boxes named "title_box")
-> 3.  Is your data source connected?
+    <!-- 2. SHEETS -->
+    <sheets>
+        <sheet name="Sales Dashboard">
+            
+            <!-- Page Configuration -->
+            <sheetConfig>
+                <showGridLines>false</showGridLines>
+                <zoomScale>90</zoomScale>
+            </sheetConfig>
 
-Happy Reporting!
+            <!-- 3. ROOT CONTAINER -->
+            <container type="GROUP" id="root">
+                <position r1="0" c1="0"/>
+                <containers>
+
+                    <!-- A. HEADER SECTION -->
+                    <container type="GROUP" id="header_group">
+                        <position r1="0" c1="0"/>
+                        <containers>
+                            
+                            <!-- Logo -->
+                            <container type="LEAF" id="logo">
+                                <position r1="1" c1="1" r2="3" c2="2"/>
+                                <component type="IMAGE" source="https://example.com/logo.png" scale="0.5"/>
+                            </container>
+
+                            <!-- Title (Relative to Logo) -->
+                            <container type="LEAF" id="title">
+                                <relativePosition>
+                                    <c1Expression><item><item><item>logo.C2</item><item>1</item></item></item></c1Expression>
+                                    <r1Expression><item><item><item>logo.R1</item></item></item></r1Expression>
+                                </relativePosition>
+                                <component type="TEXT" content="Q4 Executive Sales Report" styleId="title_style"/>
+                            </container>
+
+                        </containers>
+                    </container>
+
+                    <!-- B. DATA TABLE (Relative to Header) -->
+                    <container type="LEAF" id="table_container">
+                        <relativePosition>
+                            <r1Expression><item><item><item>header_group.R2</item><item>2</item></item></item></r1Expression>
+                            <c1Expression><item><item><item>header_group.C1</item><item>1</item></item></item></c1Expression>
+                        </relativePosition>
+
+                        <component type="TABLE" id="main_table">
+                            <title type="TEXT" content="Sales by Region &amp; Year">
+                                <style><font bold="true" size="14"/></style>
+                            </title>
+
+                            <tableConfig showColumnHeader="true" showRowHeader="true" mergeDuplicateRows="true"/>
+
+                            <!-- Columns: Years -->
+                            <columnGroups>
+                                <columnGroup id="cg_years">
+                                    <headerFields>
+                                        <headerField id="year">
+                                            <labelConfig headerLabel="Year" styleId="header_style"/>
+                                            <valueConfig dataType="TEXT">
+                                                <valueSource><sourceInfos><sourceInfo field="Year" sourceId="SalesData"/></sourceInfos></valueSource>
+                                                <style><alignment horizontal="CENTER"/></style>
+                                            </valueConfig>
+                                        </headerField>
+                                    </headerFields>
+                                    <dataFields>
+                                        <dataField id="sales">
+                                            <labelConfig headerLabel="Revenue" styleId="header_style"/>
+                                            <valueConfig dataType="FLOAT" operation="SUM" styleId="currency_style">
+                                                <valueSource><sourceInfos><sourceInfo field="Sales" sourceId="SalesData"/></sourceInfos></valueSource>
+                                            </valueConfig>
+                                        </dataField>
+                                    </dataFields>
+                                </columnGroup>
+                            </columnGroups>
+
+                            <!-- Rows: Regions -->
+                            <rowGroups>
+                                <rowGroup id="rg_regions">
+                                    <headerFields>
+                                        <headerField id="region">
+                                            <labelConfig headerLabel="Region" styleId="header_style"/>
+                                            <valueConfig dataType="TEXT">
+                                                <valueSource><sourceInfos><sourceInfo field="Region" sourceId="SalesData"/></sourceInfos></valueSource>
+                                                <style><font bold="true"/></style>
+                                            </valueConfig>
+                                        </headerField>
+                                    </headerFields>
+                                </rowGroup>
+                            </rowGroups>
+
+                        </component>
+                    </container>
+
+                </containers>
+            </container>
+        </sheet>
+    </sheets>
+
+</Template>
+```
